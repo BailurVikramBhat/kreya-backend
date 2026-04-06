@@ -8,4 +8,5 @@ module kreya.backend.main {
     requires spring.web;
     requires jakarta.persistence;
     requires spring.data.jpa;
+    requires static lombok;
 }
