@@ -9,4 +9,9 @@ module kreya.backend.main {
     requires jakarta.persistence;
     requires spring.data.jpa;
     requires static lombok;
+    requires spring.modulith.api;
+    requires jakarta.validation;
+    requires org.hibernate.validator;
+    requires spring.security.crypto;
+    requires spring.tx;
 }

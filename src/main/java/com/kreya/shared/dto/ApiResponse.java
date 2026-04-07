@@ -1,7 +1,10 @@
 package com.kreya.shared.dto;
 
+import org.springframework.modulith.NamedInterface;
+
 import java.time.Instant;
 
+@NamedInterface
 public record ApiResponse<T>(
     boolean success,
     T data,
