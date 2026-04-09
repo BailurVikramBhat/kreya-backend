@@ -4,6 +4,7 @@ import com.kreya.user.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.modulith.NamedInterface;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -11,6 +12,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+@NamedInterface
 @Component
 public class JwtProvider {
 
