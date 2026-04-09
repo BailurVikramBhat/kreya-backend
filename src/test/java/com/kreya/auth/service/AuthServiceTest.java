@@ -1,6 +1,8 @@
 package com.kreya.auth.service;
 
+import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
+import com.kreya.auth.dto.TokenResponse;
 import com.kreya.auth.entity.Credential;
 import com.kreya.auth.repository.CredentialRepository;
 import com.kreya.user.entity.Role;
@@ -115,6 +117,62 @@ class AuthServiceTest {
         assertThat(savedCredential).isPresent();
         assertThat(savedCredential.get().getPasswordHash()).isNotEqualTo("Password123!");
         assertThat(savedCredential.get().getPasswordHash()).isNotBlank();
+    }
+
+    @Test
+    void whenLoginWithValidCredentialsThenReturnTokenResponse() {
+        RegisterRequest registerRequest = new RegisterRequest();
+        registerRequest.setEmail("login-user@kreya.com");
+        registerRequest.setPassword("Password123!");
+        registerRequest.setFirstName("Vikram");
+        registerRequest.setLastName("Bhat");
+        registerRequest.setPhone("9999999999");
+        registerRequest.setRegisteringAsSeller(false);
+
+        authService.register(registerRequest);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("login-user@kreya.com");
+        loginRequest.setPassword("Password123!");
+
+        TokenResponse response = authService.login(loginRequest);
+
+        assertThat(response).isNotNull();
+        assertThat(response.getAccessToken()).isNotBlank();
+        assertThat(response.getRefreshToken()).isNotBlank();
+        assertThat(response.getTokenType()).isEqualTo("Bearer");
+    }
+
+    @Test
+    void whenLoginWithUnknownEmailThenThrowIllegalArgumentException() {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("unknown@kreya.com");
+        loginRequest.setPassword("Password123!");
+
+        assertThatThrownBy(() -> authService.login(loginRequest))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Invalid email or password");
+    }
+
+    @Test
+    void whenLoginWithWrongPasswordThenThrowIllegalArgumentException() {
+        RegisterRequest registerRequest = new RegisterRequest();
+        registerRequest.setEmail("wrong-password@kreya.com");
+        registerRequest.setPassword("Password123!");
+        registerRequest.setFirstName("Vikram");
+        registerRequest.setLastName("Bhat");
+        registerRequest.setPhone("9999999999");
+        registerRequest.setRegisteringAsSeller(false);
+
+        authService.register(registerRequest);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("wrong-password@kreya.com");
+        loginRequest.setPassword("WrongPassword123!");
+
+        assertThatThrownBy(() -> authService.login(loginRequest))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Invalid email or password");
     }
 
 }
