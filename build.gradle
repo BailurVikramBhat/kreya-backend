@@ -63,4 +63,16 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = false
+    }
+
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            println "Test summary: ${result.resultType} - ${result.testCount} total, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped"
+        }
+    }
 }

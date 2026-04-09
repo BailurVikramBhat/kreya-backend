@@ -4,11 +4,12 @@ on:
   push:
     branches:
       - master
-      - may-2026-release
+      - "*-release"
+      - "feat/**"
   pull_request:
     branches:
       - master
-      - may-2026-release
+      - "*-release"
 
 jobs:
   build-test:
@@ -65,6 +66,15 @@ jobs:
 
       - name: Run tests
         run: ./gradlew test --no-daemon
+
+      - name: Upload test reports
+        if: always() && (github.ref == 'refs/heads/master' || github.base_ref == 'master')
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            build/reports/tests/test
+            build/test-results/test
 
   code-style:
     name: Code Style

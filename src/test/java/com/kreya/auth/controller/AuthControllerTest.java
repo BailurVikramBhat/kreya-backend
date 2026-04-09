@@ -1,7 +1,9 @@
 package com.kreya.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
+import com.kreya.auth.dto.TokenResponse;
 import com.kreya.auth.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +66,61 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void whenValidLoginRequestThenReturnOk() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("user@kreya.com");
+        request.setPassword("Password123!");
+
+        TokenResponse tokenResponse = new TokenResponse();
+        tokenResponse.setAccessToken("access-token");
+        tokenResponse.setRefreshToken("refresh-token");
+        tokenResponse.setTokenType("Bearer");
+
+        when(authService.login(any(LoginRequest.class))).thenReturn(tokenResponse);
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Login successful"))
+            .andExpect(jsonPath("$.path").value("/api/v1/auth/login"))
+            .andExpect(jsonPath("$.data.accessToken").value("access-token"))
+            .andExpect(jsonPath("$.data.refreshToken").value("refresh-token"))
+            .andExpect(jsonPath("$.data.tokenType").value("Bearer"));
+    }
+
+    @Test
+    void whenInvalidLoginRequestThenReturnBadRequest() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("");
+        request.setPassword("");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void whenLoginFailsThenReturnUnauthorized() throws Exception {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("user@kreya.com");
+        request.setPassword("WrongPassword123!");
+
+        when(authService.login(any(LoginRequest.class)))
+            .thenThrow(new IllegalArgumentException("Invalid email or password"));
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Invalid email or password"))
+            .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
     }
 
 }
