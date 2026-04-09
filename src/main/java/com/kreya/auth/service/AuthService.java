@@ -1,8 +1,11 @@
 package com.kreya.auth.service;
 
+import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
+import com.kreya.auth.dto.TokenResponse;
 import com.kreya.auth.entity.Credential;
 import com.kreya.auth.repository.CredentialRepository;
+import com.kreya.shared.security.JwtProvider;
 import com.kreya.user.entity.Role;
 import com.kreya.user.entity.User;
 import com.kreya.user.repository.UserRepository;
@@ -17,13 +20,15 @@ public class AuthService {
     private final CredentialRepository credentialRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtProvider jwtProvider;
 
     public AuthService(CredentialRepository credentialRepository,
                        UserRepository userRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.credentialRepository = credentialRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtProvider = jwtProvider;
     }
 
     @Transactional
@@ -63,5 +68,20 @@ public class AuthService {
 
         credentialRepository.save(credential);
 
+    }
+
+    public TokenResponse login(LoginRequest request) {
+        Credential cred = credentialRepository.findByEmail(request.getEmail()).orElseThrow(() -> new IllegalArgumentException("Invalid email or password"));
+        if(!passwordEncoder.matches(request.getPassword(), cred.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid email or password");
+        }
+        User user = cred.getUser();
+        String accessToken = jwtProvider.generateAccessToken(user);
+        String refreshToken = jwtProvider.generateRefreshToken(user);
+        TokenResponse response = new TokenResponse();
+        response.setAccessToken(accessToken);
+        response.setRefreshToken(refreshToken);
+        response.setTokenType("Bearer");
+        return response;
     }
 }
