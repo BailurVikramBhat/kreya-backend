@@ -4,7 +4,8 @@
       "Bash(bash /c/Users/bhatt/.claude/statusline-command.sh)",
       "Bash(where jq:*)",
       "Bash(jq --version)",
-      "Bash(bash -x /c/Users/bhatt/.claude/statusline-command.sh)"
+      "Bash(bash -x /c/Users/bhatt/.claude/statusline-command.sh)",
+      "Bash(./gradlew dependencies:*)"
     ]
   }
 }

@@ -25,3 +25,8 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+jwt:
+  secret: ${JWT_SECRET:6D9MlRgNMXr0jKMonPuASLcGUISfes860zpYScTdCbX}
+  access-token-expiration: 900000
+  refresh-token-expiration: 604800000

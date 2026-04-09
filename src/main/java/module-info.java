@@ -14,4 +14,6 @@ module kreya.backend.main {
     requires org.hibernate.validator;
     requires spring.security.crypto;
     requires spring.tx;
+    requires spring.beans;
+    requires jjwt.api;
 }
