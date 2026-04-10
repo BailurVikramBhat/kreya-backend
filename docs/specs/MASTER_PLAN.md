@@ -29,7 +29,7 @@
 
 ### 1.1 Vision
 
-Kreya is a production-grade ecommerce platform with three distinct roles:
+Kreya is a production-grade ecommerce platform with three distinct roles, delivered through one unified website:
 
 | Role       | Description                                                                 |
 |------------|-----------------------------------------------------------------------------|
@@ -45,6 +45,7 @@ Kreya is a production-grade ecommerce platform with three distinct roles:
 - **Test-mandatory**: Every service has corresponding tests. No exceptions
 - **Observable from day one**: Prometheus + Grafana even in MVP
 - **Corporate-grade**: Full design pattern usage, audit trails, rate limiting, zero shortcuts
+- **Unified UX**: One maintainable website serves shopper, seller, and admin users with shared authentication and role-aware navigation
 
 ### 1.3 Tech Stack
 
@@ -62,7 +63,7 @@ Kreya is a production-grade ecommerce platform with three distinct roles:
 | CI/CD            | GitHub Actions                                  |
 | Containerization | Docker + Docker Compose                         |
 | Email            | SMTP (free tier: Gmail SMTP / Mailhog for dev)  |
-| Frontend         | React (managed by Codex — out of scope)         |
+| Frontend         | Single React website for shopper, seller, and admin using Mantine UI components |
 
 ---
 
@@ -1142,7 +1143,8 @@ Calendar-based: `YYYY.MM.PATCH`
 - [x] Active session monitoring
 - [x] Audit log viewing
 - [x] MFA re-auth on every sensitive action
-- [x] Vintage 2003 UI aesthetic
+- [x] Unified website for shopper, seller, and admin
+- [x] Mantine component library for frontend implementation
 
 **Notification Module:**
 - [x] Verification email
@@ -1481,19 +1483,13 @@ When admin views user/seller details, only these fields are shown:
 | Password            | **Never**     |
 | Full Documents      | View-only during approval       |
 
-## Appendix C: Admin Vintage UI Reference
+## Appendix C: Unified Frontend Direction
 
-The admin portal follows a **2003 Goldman Sachs Private Wealth Management / early Amazon** aesthetic:
+The platform uses a **single maintainable website** for shopper, seller, and admin experiences.
 
-- Monospace or serif fonts (Georgia, Times New Roman, Courier)
-- Dense data tables with thin borders
-- Minimal whitespace — information-dense layouts
-- Muted color palette: navy, dark grey, off-white, gold accents
-- No rounded corners, no shadows, no gradients
-- Plain HTML form elements (native selects, checkboxes, radio buttons)
-- Status indicators: colored text, not badges or pills
-- Navigation: simple top bar or left sidebar with text links
-- No animations, no transitions, no loading spinners (use text: "Loading...")
-- Favicon: simple monogram or plain icon
-
-This aesthetic communicates **raw power and control** — every pixel serves a function.
+- One shared authentication entry point for all users
+- Role-aware routing, navigation, and guarded views after login
+- Mantine component library for forms, layout, navigation, feedback states, and admin tools
+- Clean, maintainable visual system over novelty styling
+- Reusable frontend primitives and page shells instead of separate role-specific websites
+- Shared backend contracts with authorization handled by role and endpoint policy
