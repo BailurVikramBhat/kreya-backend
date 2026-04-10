@@ -167,12 +167,12 @@ Failure responses:
 
 ### 2.3 POST `/api/v1/auth/verify-email`
 
-Status: Planned under `AUTH-004`
+Status: Implemented
 
 Purpose:
 - Verify a user's email address using a verification token
 
-Planned request:
+Request:
 
 ```json
 {
@@ -180,10 +180,10 @@ Planned request:
 }
 ```
 
-Planned success:
+Success:
 - `200 OK`
 
-Planned success response:
+Success response:
 
 ```json
 {
@@ -196,9 +196,9 @@ Planned success response:
 }
 ```
 
-Planned failure responses:
+Failure responses:
 - `400 Bad Request` for invalid request body
-- `401 Unauthorized` or `400 Bad Request` for invalid, expired, or already-used token
+- `401 Unauthorized` for invalid, expired, or already-used token
 
 ### 2.4 Planned Auth Endpoints
 
