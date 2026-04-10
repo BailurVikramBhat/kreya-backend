@@ -3,8 +3,11 @@ package com.kreya.auth.service;
 import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
 import com.kreya.auth.dto.TokenResponse;
+import com.kreya.auth.dto.VerifyEmailRequest;
 import com.kreya.auth.entity.Credential;
+import com.kreya.auth.entity.EmailVerificationToken;
 import com.kreya.auth.repository.CredentialRepository;
+import com.kreya.auth.repository.EmailVerificationTokenRepository;
 import com.kreya.shared.security.JwtProvider;
 import com.kreya.user.entity.Role;
 import com.kreya.user.entity.User;
@@ -14,18 +17,22 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class AuthService {
     private final CredentialRepository credentialRepository;
+    private final EmailVerificationTokenRepository emailVerificationTokenRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
 
     public AuthService(CredentialRepository credentialRepository,
+                       EmailVerificationTokenRepository emailVerificationTokenRepository,
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder, JwtProvider jwtProvider) {
         this.credentialRepository = credentialRepository;
+        this.emailVerificationTokenRepository = emailVerificationTokenRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
@@ -68,6 +75,14 @@ public class AuthService {
 
         credentialRepository.save(credential);
 
+        EmailVerificationToken emailVerificationToken = new EmailVerificationToken();
+        emailVerificationToken.setUser(savedUser);
+        emailVerificationToken.setToken(UUID.randomUUID().toString());
+        emailVerificationToken.setExpiresAt(now.plusHours(24));
+        emailVerificationToken.setCreatedAt(now);
+
+        emailVerificationTokenRepository.save(emailVerificationToken);
+
     }
 
     public TokenResponse login(LoginRequest request) {
@@ -83,5 +98,29 @@ public class AuthService {
         response.setRefreshToken(refreshToken);
         response.setTokenType("Bearer");
         return response;
+    }
+
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        EmailVerificationToken emailVerificationToken = emailVerificationTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid verification token"));
+
+        if (emailVerificationToken.getVerifiedAt() != null) {
+            throw new IllegalArgumentException("Verification token already used");
+        }
+
+        if (emailVerificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Verification token expired");
+        }
+
+        Credential credential = credentialRepository.findByUser(emailVerificationToken.getUser())
+                .orElseThrow(() -> new IllegalArgumentException("Credential not found"));
+
+        credential.setEmailVerified(true);
+        credential.setUpdatedAt(LocalDateTime.now());
+        credentialRepository.save(credential);
+
+        emailVerificationToken.setVerifiedAt(LocalDateTime.now());
+        emailVerificationTokenRepository.save(emailVerificationToken);
     }
 }

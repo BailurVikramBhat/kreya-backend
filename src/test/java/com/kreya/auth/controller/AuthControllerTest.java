@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
 import com.kreya.auth.dto.TokenResponse;
+import com.kreya.auth.dto.VerifyEmailRequest;
 import com.kreya.auth.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +122,50 @@ class AuthControllerTest {
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.message").value("Invalid email or password"))
             .andExpect(jsonPath("$.path").value("/api/v1/auth/login"));
+    }
+
+    @Test
+    void whenValidVerifyEmailRequestThenReturnOk() throws Exception {
+        VerifyEmailRequest request = new VerifyEmailRequest();
+        request.setToken("verification-token");
+
+        doNothing().when(authService).verifyEmail(any(VerifyEmailRequest.class));
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.message").value("Email verified successfully"))
+            .andExpect(jsonPath("$.path").value("/api/v1/auth/verify-email"));
+    }
+
+    @Test
+    void whenInvalidVerifyEmailRequestThenReturnBadRequest() throws Exception {
+        VerifyEmailRequest request = new VerifyEmailRequest();
+        request.setToken("");
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void whenVerifyEmailFailsThenReturnUnauthorized() throws Exception {
+        VerifyEmailRequest request = new VerifyEmailRequest();
+        request.setToken("bad-token");
+
+        doThrow(new IllegalArgumentException("Invalid verification token"))
+                .when(authService).verifyEmail(any(VerifyEmailRequest.class));
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value("Invalid verification token"))
+            .andExpect(jsonPath("$.path").value("/api/v1/auth/verify-email"));
     }
 
 }
