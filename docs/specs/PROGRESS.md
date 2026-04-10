@@ -19,3 +19,7 @@
 ### 2026-04-09
 - `AUTH-003` completed.
 - Implemented login with JWT access and refresh token issuance, login controller/service tests, validation/error handling improvements, and CI test summary/report workflow refinement.
+
+### 2026-04-10
+- `AUTH-004` completed.
+- Added email verification token persistence, token creation during registration, email verification endpoint, verification controller/service coverage, and token validation for invalid, expired, and reused verification attempts.

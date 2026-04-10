@@ -12,4 +12,5 @@
 - Chose a maintainable frontend direction for later implementation: single website login, Mantine component library, and no vintage-themed design work.
 
 ## 2026-04-10
-- Added in-repo backend project memory files under `docs/spec` to track completed work, completed ticket ids, and architecture decisions over time.
+- Added in-repo backend project memory files under `docs/specs` to track completed work, completed ticket ids, and architecture decisions over time.
+- Implemented email verification as a persisted database token in `auth_schema.email_verification_tokens`, created at registration time and consumed through a dedicated verification endpoint.
