@@ -3,8 +3,11 @@ package com.kreya.auth.service;
 import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
 import com.kreya.auth.dto.TokenResponse;
+import com.kreya.auth.dto.VerifyEmailRequest;
 import com.kreya.auth.entity.Credential;
+import com.kreya.auth.entity.EmailVerificationToken;
 import com.kreya.auth.repository.CredentialRepository;
+import com.kreya.auth.repository.EmailVerificationTokenRepository;
 import com.kreya.user.entity.Role;
 import com.kreya.user.entity.User;
 import com.kreya.user.repository.UserRepository;
@@ -30,9 +33,12 @@ class AuthServiceTest {
     private UserRepository userRepository;
     @Autowired
     private CredentialRepository credentialRepository;
+    @Autowired
+    private EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @BeforeEach
     void setup() {
+        emailVerificationTokenRepository.deleteAll();
         credentialRepository.deleteAll();
         userRepository.deleteAll();
     }
@@ -57,6 +63,7 @@ class AuthServiceTest {
         assertThat(savedCredential).isPresent();
         assertThat(savedCredential.get().getPasswordHash()).isNotEqualTo(request.getPassword());
         assertThat(savedCredential.get().isEmailVerified()).isFalse();
+        assertThat(emailVerificationTokenRepository.findByUser(savedUser.get())).isPresent();
     }
 
     @Test
@@ -173,6 +180,93 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(loginRequest))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Invalid email or password");
+    }
+
+    @Test
+    void whenVerifyEmailWithValidTokenThenEmailMarkedVerified() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("verify@kreya.com");
+        request.setPassword("Password123!");
+        request.setFirstName("Vikram");
+        request.setLastName("Bhat");
+        request.setPhone("9999999999");
+        request.setRegisteringAsSeller(false);
+
+        authService.register(request);
+
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        EmailVerificationToken token = emailVerificationTokenRepository.findByUser(user).orElseThrow();
+
+        VerifyEmailRequest verifyRequest = new VerifyEmailRequest();
+        verifyRequest.setToken(token.getToken());
+
+        authService.verifyEmail(verifyRequest);
+
+        Credential credential = credentialRepository.findByEmail(request.getEmail()).orElseThrow();
+        EmailVerificationToken updatedToken = emailVerificationTokenRepository.findByToken(token.getToken()).orElseThrow();
+
+        assertThat(credential.isEmailVerified()).isTrue();
+        assertThat(updatedToken.getVerifiedAt()).isNotNull();
+    }
+
+    @Test
+    void whenVerifyEmailWithInvalidTokenThenThrowIllegalArgumentException() {
+        VerifyEmailRequest verifyRequest = new VerifyEmailRequest();
+        verifyRequest.setToken("invalid-token");
+
+        assertThatThrownBy(() -> authService.verifyEmail(verifyRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Invalid verification token");
+    }
+
+    @Test
+    void whenVerifyEmailWithExpiredTokenThenThrowIllegalArgumentException() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("expired@kreya.com");
+        request.setPassword("Password123!");
+        request.setFirstName("Vikram");
+        request.setLastName("Bhat");
+        request.setPhone("9999999999");
+        request.setRegisteringAsSeller(false);
+
+        authService.register(request);
+
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        EmailVerificationToken token = emailVerificationTokenRepository.findByUser(user).orElseThrow();
+        token.setExpiresAt(token.getCreatedAt().minusMinutes(1));
+        emailVerificationTokenRepository.save(token);
+
+        VerifyEmailRequest verifyRequest = new VerifyEmailRequest();
+        verifyRequest.setToken(token.getToken());
+
+        assertThatThrownBy(() -> authService.verifyEmail(verifyRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Verification token expired");
+    }
+
+    @Test
+    void whenVerifyEmailWithUsedTokenThenThrowIllegalArgumentException() {
+        RegisterRequest request = new RegisterRequest();
+        request.setEmail("used@kreya.com");
+        request.setPassword("Password123!");
+        request.setFirstName("Vikram");
+        request.setLastName("Bhat");
+        request.setPhone("9999999999");
+        request.setRegisteringAsSeller(false);
+
+        authService.register(request);
+
+        User user = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        EmailVerificationToken token = emailVerificationTokenRepository.findByUser(user).orElseThrow();
+        token.setVerifiedAt(token.getCreatedAt().plusMinutes(5));
+        emailVerificationTokenRepository.save(token);
+
+        VerifyEmailRequest verifyRequest = new VerifyEmailRequest();
+        verifyRequest.setToken(token.getToken());
+
+        assertThatThrownBy(() -> authService.verifyEmail(verifyRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Verification token already used");
     }
 
 }

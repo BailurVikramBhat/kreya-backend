@@ -3,6 +3,7 @@ package com.kreya.auth.controller;
 import com.kreya.auth.dto.LoginRequest;
 import com.kreya.auth.dto.RegisterRequest;
 import com.kreya.auth.dto.TokenResponse;
+import com.kreya.auth.dto.VerifyEmailRequest;
 import com.kreya.auth.service.AuthService;
 import com.kreya.shared.dto.ApiResponse;
 import jakarta.validation.Valid;
@@ -32,5 +33,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
         TokenResponse response = authService.login(request);
         return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(response, "Login successful", "/api/v1/auth/login"));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.status(HttpStatus.OK).body(ApiResponse.success(null, "Email verified successfully", "/api/v1/auth/verify-email"));
     }
 }
